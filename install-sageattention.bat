@@ -151,10 +151,73 @@ REM ── Step 4: Installation ──
 echo Step 4: Installing...
 echo.
 
-REM Install triton-windows
+REM Detect triton-windows version from PyTorch minor version
+set "TRITON_SPEC="
+set "TRITON_LABEL="
+if "!TORCH_VER!"=="not found" (
+    echo   WARNING: PyTorch not detected. Cannot determine triton-windows version.
+    echo   [1] Continue without triton-windows
+    echo   [2] Cancel
+    echo.
+    set "TRITON_SKIP_CHOICE="
+    set /p "TRITON_SKIP_CHOICE=  Choose [1-2]: "
+    if "!TRITON_SKIP_CHOICE!"=="2" (
+        echo.
+        echo   Cancelled.
+        pause
+        exit /b 0
+    )
+    goto skip_triton
+)
+
+for /f "tokens=1,2 delims=.+" %%A in ("!TORCH_VER!") do (
+    set "TORCH_MINOR=%%B"
+)
+
+if "!TORCH_MINOR!"=="4" (
+    set "TRITON_SPEC=triton-windows>=3.1,<3.2"
+    set "TRITON_LABEL=3.1.x"
+) else if "!TORCH_MINOR!"=="5" (
+    set "TRITON_SPEC=triton-windows>=3.1,<3.2"
+    set "TRITON_LABEL=3.1.x"
+) else if "!TORCH_MINOR!"=="6" (
+    set "TRITON_SPEC=triton-windows>=3.2,<3.3"
+    set "TRITON_LABEL=3.2.x"
+) else if "!TORCH_MINOR!"=="7" (
+    set "TRITON_SPEC=triton-windows>=3.3,<3.4"
+    set "TRITON_LABEL=3.3.x"
+) else if "!TORCH_MINOR!"=="8" (
+    set "TRITON_SPEC=triton-windows>=3.4,<3.5"
+    set "TRITON_LABEL=3.4.x"
+) else if "!TORCH_MINOR!"=="9" (
+    set "TRITON_SPEC=triton-windows>=3.5,<3.6"
+    set "TRITON_LABEL=3.5.x"
+) else if "!TORCH_MINOR!"=="10" (
+    set "TRITON_SPEC=triton-windows>=3.6,<3.7"
+    set "TRITON_LABEL=3.6.x"
+)
+
+if not defined TRITON_SPEC (
+    echo   WARNING: Unknown PyTorch minor version "!TORCH_MINOR!" - no triton mapping found.
+    echo   [1] Continue without triton-windows
+    echo   [2] Cancel
+    echo.
+    set "TRITON_SKIP_CHOICE="
+    set /p "TRITON_SKIP_CHOICE=  Choose [1-2]: "
+    if "!TRITON_SKIP_CHOICE!"=="2" (
+        echo.
+        echo   Cancelled.
+        pause
+        exit /b 0
+    )
+    goto skip_triton
+)
+
+echo   PyTorch 2.!TORCH_MINOR! -^> triton-windows !TRITON_LABEL!
 echo   Installing triton-windows...
-"!PYTHON_DIR!\python.exe" -m pip install -U "triton-windows<3.7"
+"!PYTHON_DIR!\python.exe" -m pip install -U "!TRITON_SPEC!"
 echo.
+:skip_triton
 
 REM Copy include/libs
 set "SOURCE=%SCRIPT_DIR%assets\python_3.13.2_include_libs"
