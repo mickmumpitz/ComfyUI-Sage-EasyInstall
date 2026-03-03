@@ -37,42 +37,11 @@ GTX 16xx / RTX 20xx (Turing) support was dropped in triton-windows 3.3+ (PyTorch
 
 ## How to Use
 
-1. Download or clone this repository
+1. Download the [latest version](github.com/mickmumpitz/Sage-Quickinstall/releases/latest/download/sage-quickinstall.zip) or clone this repository
 2. Double-click `install-sage-only.bat` or `install-comfyui-setup.bat`
 3. Enter the path to your ComfyUI portable folder (e.g. `D:\ComfyUI_windows_portable`)
 4. The installer auto-detects your environment and installs everything
 5. Use the generated `run_nvidia_gpu_sage.bat` in your ComfyUI folder to launch with SageAttention enabled
-
-## What Gets Installed
-
-- **triton-windows** — matched to your PyTorch version (installed via pip)
-- **SageAttention** — auto-selected wheel based on your CUDA major version and PyTorch version
-- **Python include/libs** — copied to embedded Python (required for triton compilation)
-- **ComfyUI-Manager** — optional, only in `install-comfyui-setup.bat`
-
-## Included Wheels
-
-| Wheel | CUDA | PyTorch |
-|---|---|---|
-| `cu124torch2.5.1` | 12.x | 2.5 |
-| `cu126torch2.6.0` | 12.x | 2.6 |
-| `cu128torch2.7.1` | 12.x | 2.7 |
-| `cu128torch2.8.0` | 12.x | 2.8 |
-| `cu128torch2.9.0andhigher` | 12.x | 2.9+ |
-| `cu130torch2.9.0andhigher` | 13.x | 2.9+ |
-
-CUDA minor version doesn't matter for SageAttention — only the major version (12 vs 13). For example, the `cu128` wheel works with CUDA 12.4, 12.6, and 12.8.
-
-PyTorch 2.9+ wheels use [ABI3](https://docs.python.org/3/c-api/stable.html) and [libtorch stable ABI](https://docs.pytorch.org/docs/stable/notes/libtorch_stable_abi.html), so a single wheel covers all Python versions >= 3.9 and all PyTorch versions >= 2.9.
-
-## Verification
-
-Test scripts are included in `assets/check/`:
-
-```
-path\to\python_embeded\python.exe assets\check\test_triton.py
-path\to\python_embeded\python.exe assets\check\test_sageattn.py
-```
 
 ## Troubleshooting
 
