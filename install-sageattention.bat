@@ -92,10 +92,68 @@ if exist "%TEMP%\_sage_cuda.tmp" (
 echo   CUDA:     !CUDA_VER!
 echo.
 
-REM ── Step 3: List available wheels ──
+REM ── Step 3: Auto-select wheel ──
 :select_wheel
-echo Step 3: Select wheel
+echo Step 3: Selecting wheel...
 
+REM Determine CUDA major version (12 vs 13) - minor version doesn't matter for SageAttention
+set "CUDA_MAJOR="
+if not "!CUDA_VER!"=="not found" (
+    for /f "tokens=1 delims=." %%A in ("!CUDA_VER!") do (
+        set "CUDA_MAJOR=%%A"
+    )
+)
+
+REM Determine torch minor version for wheel matching
+set "TORCH_MAJOR="
+set "TORCH_MINOR="
+set "TORCH_PATCH="
+if not "!TORCH_VER!"=="not found" (
+    for /f "tokens=1,2,3 delims=.+" %%A in ("!TORCH_VER!") do (
+        set "TORCH_MAJOR=%%A"
+        set "TORCH_MINOR=%%B"
+        set "TORCH_PATCH=%%C"
+    )
+)
+
+REM Try to find matching wheel
+set "SELECTED_WHL="
+set "SELECTED_NAME="
+
+if not defined CUDA_MAJOR goto manual_select
+if not defined TORCH_MINOR goto manual_select
+
+REM PyTorch >= 2.9 uses the "andhigher" wheel (libtorch stable ABI)
+set "USE_ANDHIGHER=0"
+if !TORCH_MINOR! GEQ 9 set "USE_ANDHIGHER=1"
+
+REM CUDA minor version doesn't matter for SageAttention, only major (12 vs 13)
+REM So cu128 works for cu124/cu126/cu128 etc., cu130 works for cu130/cu131 etc.
+if "!USE_ANDHIGHER!"=="1" (
+    for %%F in ("%SCRIPT_DIR%assets\wheels\sageattention*+cu!CUDA_MAJOR!*torch2.9.0andhigher*-win_amd64.whl") do (
+        set "SELECTED_WHL=%%F"
+        set "SELECTED_NAME=%%~nxF"
+    )
+) else (
+    REM Try matching CUDA major + exact torch version
+    for %%F in ("%SCRIPT_DIR%assets\wheels\sageattention*+cu!CUDA_MAJOR!*torch!TORCH_MAJOR!.!TORCH_MINOR!.*-win_amd64.whl") do (
+        set "SELECTED_WHL=%%F"
+        set "SELECTED_NAME=%%~nxF"
+    )
+)
+
+if defined SELECTED_WHL (
+    echo   Auto-detected: !SELECTED_NAME!
+    echo.
+    goto install_wheel
+)
+
+echo   Could not auto-detect a matching wheel for CUDA !CUDA_VER! + PyTorch !TORCH_VER!
+echo.
+
+:manual_select
+REM Fallback: let user pick manually
+echo   Available wheels:
 set "WHL_COUNT=0"
 for %%F in ("%SCRIPT_DIR%assets\wheels\sageattention*.whl") do (
     set /a WHL_COUNT+=1
@@ -130,7 +188,6 @@ if "%USER_CHOICE%"=="0" (
     exit /b 0
 )
 
-REM Validate choice is a number in range
 set "VALID=0"
 for /l %%I in (1,1,%WHL_COUNT%) do (
     if "%USER_CHOICE%"=="%%I" set "VALID=1"
@@ -146,6 +203,8 @@ set "SELECTED_NAME=!WHL_NAME_%USER_CHOICE%!"
 echo.
 echo   Selected: !SELECTED_NAME!
 echo.
+
+:install_wheel
 
 REM ── Step 4: Installation ──
 echo Step 4: Installing...
@@ -247,8 +306,54 @@ echo.
 echo   SageAttention installed successfully.
 echo.
 
-REM ── Step 5: Create run_nvidia_gpu_sage.bat ──
-echo Step 5: Create launcher
+REM ── Step 5: ComfyUI-Manager (optional) ──
+if exist "!COMFYUI_DIR!\ComfyUI\custom_nodes\comfyui-manager" (
+    echo Step 5: ComfyUI-Manager already installed, skipping.
+    echo.
+    goto after_manager
+)
+
+echo Step 5: Install ComfyUI-Manager?
+echo   ComfyUI-Manager lets you install/update custom nodes from the UI.
+echo   [1] Yes
+echo   [2] No
+echo.
+
+:prompt_manager
+set "MGR_CHOICE="
+set /p "MGR_CHOICE=  Choose [1-2]: "
+
+if "!MGR_CHOICE!"=="2" (
+    echo.
+    echo   Skipping ComfyUI-Manager.
+    echo.
+    goto after_manager
+)
+
+if not "!MGR_CHOICE!"=="1" goto prompt_manager
+
+echo.
+echo   Installing gitpython...
+"!PYTHON_DIR!\python.exe" -s -m pip install gitpython
+echo.
+echo   Cloning ComfyUI-Manager...
+"!PYTHON_DIR!\python.exe" -c "import git; git.Repo.clone_from('https://github.com/ltdrdata/ComfyUI-Manager', r'!COMFYUI_DIR!\ComfyUI\custom_nodes\comfyui-manager')"
+if !ERRORLEVEL! NEQ 0 (
+    echo   WARNING: Failed to clone ComfyUI-Manager. Skipping.
+    echo.
+    goto after_manager
+)
+echo.
+echo   Installing ComfyUI-Manager requirements...
+"!PYTHON_DIR!\python.exe" -s -m pip install -r "!COMFYUI_DIR!\ComfyUI\custom_nodes\comfyui-manager\requirements.txt"
+echo.
+echo   ComfyUI-Manager installed successfully.
+echo.
+
+:after_manager
+
+REM ── Step 6: Create run_nvidia_gpu_sage.bat ──
+echo Step 6: Create launcher
 
 set "EXTRA_FLAGS="
 echo.
