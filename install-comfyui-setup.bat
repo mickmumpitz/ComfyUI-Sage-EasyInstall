@@ -263,6 +263,9 @@ if "!TORCH_MINOR!"=="4" (
     set "TRITON_SPEC=triton-windows>=3.6,<3.7"
     set "TRITON_LABEL=3.6.x"
 ) else if "!TORCH_MINOR!"=="11" (
+    set "TRITON_SPEC=triton-windows>=3.6,<3.7"
+    set "TRITON_LABEL=3.6.x"
+) else if "!TORCH_MINOR!"=="12" (
     set "TRITON_SPEC=triton-windows>=3.7,<3.8"
     set "TRITON_LABEL=3.7.x"
 )

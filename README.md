@@ -1,6 +1,6 @@
 # ComfyUI-Sage-EasyInstall
 
-Automated installers for [SageAttention](https://github.com/woct0rdho/SageAttention) on Windows for [ComfyUI portable](https://github.com/Comfy-Org/ComfyUI/releases/latest).
+Automated installers for [SageAttention](https://github.com/sdbds/SageAttention-for-windows) on Windows for [ComfyUI portable](https://github.com/Comfy-Org/ComfyUI/releases/latest).
 
 SageAttention accelerates AI video generation significantly. If you're using models like WAN in ComfyUI, SageAttention can make your renders up to twice as fast — but installing it on Windows has always been a pain. This installer handles everything automatically so you can get the speed boost without the headache.
 
